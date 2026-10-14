@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Application Tracker</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:      #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.10);
+    --series-blue:    #2a78d6;
+    --series-orange:  #eb6834;
+    --series-aqua:    #1baf7a;
+    --series-yellow:  #eda100;
+    --series-magenta: #e87ba4;
+    --series-violet:  #4a3aa7;
+    --series-red:     #e34948;
+    --status-good:    #0ca30c;
+    --status-critical:#d03b3b;
+    --row-hover:      rgba(11,11,11,0.035);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1: #1a1a19; --page-plane: #0d0d0d;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --gridline: #2c2c2a; --border: rgba(255,255,255,0.10);
+      --series-blue: #3987e5; --series-orange: #d95926; --series-aqua: #199e70;
+      --series-yellow: #c98500; --series-magenta: #d55181; --series-violet: #9085e9; --series-red: #e66767;
+      --status-good: #0ca30c; --status-critical: #d03b3b;
+      --row-hover: rgba(255,255,255,0.04);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --border: rgba(255,255,255,0.10); --row-hover: rgba(255,255,255,0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--page-plane); color: var(--text-primary); min-height: 100vh; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 20px 64px; }
+  header.page-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  header.page-header h1 { font-size: 22px; font-weight: 700; margin: 0; }
+  .nav-link { font-size: 13px; color: var(--series-blue); text-decoration: none; margin-right: 14px; }
+  .meta { font-size: 13px; color: var(--text-muted); }
+  .meta button { margin-left: 10px; font-size: 13px; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--text-secondary); cursor: pointer; }
+  .meta button:hover { background: var(--row-hover); }
+
+  .board { display: grid; grid-template-columns: repeat(8, minmax(200px, 1fr)); gap: 10px; overflow-x: auto; align-items: start; }
+  .column { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; min-width: 200px; }
+  .column-head { padding: 8px 10px; border-bottom: 1px solid var(--gridline); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; display: flex; justify-content: space-between; align-items: center; }
+  .column-count { font-size: 10px; color: var(--text-muted); font-weight: 600; background: var(--row-hover); border-radius: 999px; padding: 1px 6px; }
+  .column-body { padding: 6px; display: flex; flex-direction: column; gap: 4px; max-height: 74vh; overflow-y: auto; }
+  .card {
+    display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 6px; row-gap: 0;
+    background: var(--page-plane); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 8px; font-size: 12px; cursor: default;
+  }
+  .card .company { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .role { grid-column: 1; color: var(--text-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .notes { display: none; }
+  .card select {
+    grid-column: 2; grid-row: 1 / span 2; width: 92px; font-family: inherit; font-size: 10.5px;
+    color: var(--text-secondary); background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 4px;
+  }
+  .empty-col { padding: 14px 10px; text-align: center; color: var(--text-muted); font-size: 11px; }
+
+  .loading-state, .error-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
+  .error-state { color: var(--status-critical); }
+
+  #loginOverlay { position: fixed; inset: 0; background: var(--page-plane); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  #loginForm { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 28px 26px; width: 280px; text-align: center; }
+  #loginPassword { width: 100%; font-size: 14px; padding: 9px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-primary); margin-bottom: 10px; box-sizing: border-box; }
+  #loginForm button { width: 100%; font-size: 14px; font-weight: 600; padding: 9px 10px; border-radius: 6px; border: none; background: var(--series-blue); color: #fff; cursor: pointer; }
+  #loginError { color: var(--status-critical); font-size: 12px; margin-top: 8px; display: none; }
+
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+    .column-body { max-height: none; }
+  }
+</style>
+</head>
+<body>
+<div id="loginOverlay">
+  <form id="loginForm">
+    <div style="font-weight:700;font-size:16px;margin-bottom:14px;">Application Tracker</div>
+    <input type="password" id="loginPassword" placeholder="Password" autofocus>
+    <button type="submit">Enter</button>
+    <div id="loginError">Wrong password</div>
+  </form>
+</div>
+
+<div class="wrap" id="mainWrap" style="display:none;">
+  <header class="page-header">
+    <div>
+      <a class="nav-link" href="/">← Job Dashboard</a>
+      <h1 style="display:inline;">Application Tracker</h1>
+    </div>
+    <div class="meta">
+      <span id="fetchedAt">Loading…</span>
+      <button id="refreshBtn" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <div id="boardHost">
+    <div class="loading-state">Loading pipeline…</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const STAGES = [
+    { key: "screening", label: "Screening Call", match: (s) => /screening|phone call/i.test(s) },
+    { key: "assessment", label: "Assessment", match: (s) => /assessment centre|assessment center/i.test(s) === false && /assessment|online questions|test/i.test(s) && !/denied/i.test(s) },
+    { key: "assessmentCentre", label: "Assessment Centre", match: (s) => /assessment centre|assessment center/i.test(s) && !/denied/i.test(s) },
+    { key: "interview", label: "Interview", match: (s) => /interview/i.test(s) && !/screening|denied/i.test(s) },
+    { key: "waitingForResponse", label: "Waiting for Response", match: (s) => /waiting for response/i.test(s) && !/applied,?\s*waiting for response/i.test(s) },
+    { key: "offer", label: "Offer", match: (s) => /offer/i.test(s) },
+    { key: "rejected", label: "Rejected", match: (s) => /denied|rejected|unsuccessful/i.test(s) },
+    { key: "applied", label: "Applied", match: (s) => /applied|awaiting reply/i.test(s) },
+  ];
+  const STAGE_ORDER = ["applied", "screening", "assessment", "assessmentCentre", "interview", "waitingForResponse", "offer", "rejected"];
+
+  let rows = [];
+  const el = (id) => document.getElementById(id);
+
+  function stageFor(status) {
+    for (const s of STAGES) if (s.match(status || "")) return s.key;
+    return "applied";
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  function render() {
+    const buckets = {};
+    for (const key of STAGE_ORDER) buckets[key] = [];
+    for (const r of rows) buckets[stageFor(r.status)].push(r);
+
+    const columns = STAGE_ORDER.map(key => {
+      const stage = STAGES.find(s => s.key === key);
+      const items = buckets[key];
+      const cards = items.length
+        ? items.map(r => {
+            const tooltipParts = [r.company, r.role, r.notes].filter(Boolean);
+            return `
+          <div class="card" title="${escapeHtml(tooltipParts.join(" — "))}">
+            <div class="company">${escapeHtml(r.company)}</div>
+            <div class="role">${escapeHtml(r.role)}</div>
+            <select data-row="${r.rowIndex}">
+              ${STAGE_ORDER.map(k => {
+                const opt = STAGES.find(s => s.key === k);
+                return `<option value="${k}" ${k === key ? "selected" : ""}>${opt.label}</option>`;
+              }).join("")}
+            </select>
+          </div>
+        `;
+          }).join("")
+        : `<div class="empty-col">Nothing here</div>`;
+
+      return `
+        <div class="column">
+          <div class="column-head">${stage.label}<span class="column-count">${items.length}</span></div>
+          <div class="column-body">${cards}</div>
+        </div>
+      `;
+    }).join("");
+
+    el("boardHost").innerHTML = `<div class="board">${columns}</div>`;
+
+    document.querySelectorAll(".card select").forEach(sel => {
+      sel.addEventListener("change", async () => {
+        const rowIndex = parseInt(sel.getAttribute("data-row"), 10);
+        const row = rows.find(r => r.rowIndex === rowIndex);
+        const newStageKey = sel.value;
+        const newStage = STAGES.find(s => s.key === newStageKey);
+        // Pick a concrete status string for the new stage
+        const STATUS_TEXT = {
+          applied: "Applied, waiting for response",
+          screening: "Screening Call",
+          assessment: "Online Assessment",
+          assessmentCentre: "Assessment Centre",
+          interview: "Interview",
+          waitingForResponse: "Waiting for response",
+          offer: "Offer",
+          rejected: "Denied after application",
+        };
+        const newStatus = STATUS_TEXT[newStageKey];
+        sel.disabled = true;
+        try {
+          const resp = await fetch("/api/tracker", {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-dashboard-key": localStorage.getItem("dashboardKey") || "" },
+            body: JSON.stringify({ rowIndex, company: row.company, role: row.role, status: newStatus }),
+          });
+          if (resp.status === 401) { localStorage.removeItem("dashboardKey"); showLogin(true); return; }
+          if (!resp.ok) throw new Error(`Save failed (${resp.status})`);
+          row.status = newStatus;
+          render();
+        } catch (err) {
+          alert("Couldn't update: " + err.message);
+          sel.disabled = false;
+        }
+      });
+    });
+  }
+
+  function showLogin(wrong) {
+    el("loginOverlay").style.display = "flex";
+    el("mainWrap").style.display = "none";
+    el("loginError").style.display = wrong ? "block" : "none";
+    el("loginPassword").focus();
+  }
+  function hideLogin() {
+    el("loginOverlay").style.display = "none";
+    el("mainWrap").style.display = "block";
+  }
+
+  async function loadTracker() {
+    el("boardHost").innerHTML = `<div class="loading-state">Loading pipeline…</div>`;
+    el("fetchedAt").textContent = "Loading…";
+    try {
+      const resp = await fetch("/api/tracker", { headers: { "x-dashboard-key": localStorage.getItem("dashboardKey") || "" } });
+      if (resp.status === 401) { localStorage.removeItem("dashboardKey"); showLogin(true); return; }
+      if (!resp.ok) throw new Error(`Request failed (${resp.status})`);
+      const data = await resp.json();
+      rows = data.rows || [];
+      el("fetchedAt").textContent = "Updated " + new Date().toLocaleTimeString();
+      render();
+    } catch (err) {
+      el("boardHost").innerHTML = `<div class="error-state">Couldn't load tracker: ${escapeHtml(err.message)}</div>`;
+      el("fetchedAt").textContent = "Failed to load";
+    }
+  }
+
+  el("loginForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    localStorage.setItem("dashboardKey", el("loginPassword").value);
+    hideLogin();
+    loadTracker();
+  });
+  el("refreshBtn").addEventListener("click", loadTracker);
+
+  if (localStorage.getItem("dashboardKey")) { hideLogin(); loadTracker(); }
+  else showLogin(false);
+})();
+</script>
+</body>
+</html>

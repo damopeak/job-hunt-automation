@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Updates</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --gridline: #e1e0d9; --border: rgba(11,11,11,0.10);
+    --series-blue: #2a78d6;
+    --status-good: #0ca30c; --status-warning: #fab219; --status-serious: #ec835a; --status-critical: #d03b3b;
+    --row-hover: rgba(11,11,11,0.035);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1: #1a1a19; --page-plane: #0d0d0d;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --gridline: #2c2c2a; --border: rgba(255,255,255,0.10);
+      --series-blue: #3987e5;
+      --status-good: #0ca30c; --status-warning: #fab219; --status-serious: #ec835a; --status-critical: #d03b3b;
+      --row-hover: rgba(255,255,255,0.04);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --border: rgba(255,255,255,0.10); --row-hover: rgba(255,255,255,0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--page-plane); color: var(--text-primary); min-height: 100vh; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 20px 64px; }
+  header.page-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  header.page-header h1 { font-size: 22px; font-weight: 700; margin: 0; display: inline; }
+  .nav-link { font-size: 13px; color: var(--series-blue); text-decoration: none; margin-left: 14px; }
+  .meta { font-size: 13px; color: var(--text-muted); }
+  .meta button { margin-left: 10px; font-size: 13px; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--text-secondary); cursor: pointer; }
+  .meta button:hover { background: var(--row-hover); }
+
+  .day-group { margin-bottom: 28px; }
+  .day-heading { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); margin-bottom: 10px; padding-left: 30px; }
+
+  .timeline { position: relative; padding-left: 30px; }
+  .timeline::before { content: ""; position: absolute; left: 9px; top: 4px; bottom: 4px; width: 2px; background: var(--gridline); }
+  .entry { position: relative; padding-bottom: 16px; }
+  .entry:last-child { padding-bottom: 0; }
+  .entry-dot { position: absolute; left: -30px; top: 3px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--page-plane); }
+  .entry-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .entry-company { font-weight: 700; font-size: 13.5px; }
+  .entry-role { color: var(--text-secondary); font-size: 12.5px; margin-bottom: 4px; }
+  .entry-change { font-size: 12.5px; color: var(--text-primary); }
+  .entry-badge { display: inline-block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; margin-bottom: 4px; }
+
+  .badge-good     { background: color-mix(in srgb, var(--status-good) 16%, transparent); color: var(--status-good); }
+  .badge-warning  { background: color-mix(in srgb, var(--status-warning) 20%, transparent); color: color-mix(in srgb, var(--status-warning) 70%, black); }
+  .badge-serious  { background: color-mix(in srgb, var(--status-serious) 18%, transparent); color: var(--status-serious); }
+  .badge-critical { background: color-mix(in srgb, var(--status-critical) 16%, transparent); color: var(--status-critical); }
+  .badge-neutral  { background: var(--row-hover); color: var(--text-secondary); }
+  .dot-good { background: var(--status-good); }
+  .dot-warning { background: var(--status-warning); }
+  .dot-serious { background: var(--status-serious); }
+  .dot-critical { background: var(--status-critical); }
+  .dot-neutral { background: var(--text-muted); }
+
+  .loading-state, .error-state, .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
+  .error-state { color: var(--status-critical); }
+
+  #loginOverlay { position: fixed; inset: 0; background: var(--page-plane); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  #loginForm { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 28px 26px; width: 280px; text-align: center; }
+  #loginPassword { width: 100%; font-size: 14px; padding: 9px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-primary); margin-bottom: 10px; box-sizing: border-box; }
+  #loginForm button { width: 100%; font-size: 14px; font-weight: 600; padding: 9px 10px; border-radius: 6px; border: none; background: var(--series-blue); color: #fff; cursor: pointer; }
+  #loginError { color: var(--status-critical); font-size: 12px; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+<div id="loginOverlay">
+  <form id="loginForm">
+    <div style="font-weight:700;font-size:16px;margin-bottom:14px;">Updates</div>
+    <input type="password" id="loginPassword" placeholder="Password" autofocus>
+    <button type="submit">Enter</button>
+    <div id="loginError">Wrong password</div>
+  </form>
+</div>
+
+<div class="wrap" id="mainWrap" style="display:none;">
+  <header class="page-header">
+    <div>
+      <h1>Updates</h1>
+      <a class="nav-link" href="/">Job Dashboard</a>
+      <a class="nav-link" href="/tracker.html">Application Tracker</a>
+    </div>
+    <div class="meta">
+      <span id="fetchedAt">Loading…</span>
+      <button id="refreshBtn" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <div id="timelineHost">
+    <div class="loading-state">Loading updates…</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const el = (id) => document.getElementById(id);
+
+  function classify(change) {
+    const c = (change || "").toLowerCase();
+    if (/denied|rejected|unsuccessful/.test(c)) return { badge: "Rejected", cls: "critical" };
+    if (/offer/.test(c)) return { badge: "Offer", cls: "good" };
+    if (/interview/.test(c) && !/screening/.test(c)) return { badge: "Interview", cls: "warning" };
+    if (/screening|phone call/.test(c)) return { badge: "Screening Call", cls: "serious" };
+    if (/assessment centre|assessment center/.test(c)) return { badge: "Assessment Centre", cls: "warning" };
+    if (/assessment|online questions|test/.test(c)) return { badge: "Assessment", cls: "warning" };
+    if (/new application/.test(c)) return { badge: "New Application", cls: "neutral" };
+    if (/no application status changes/.test(c)) return { badge: "No changes", cls: "neutral" };
+    return { badge: "Update", cls: "neutral" };
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  function fmtDayHeading(isoDate, rawDate) {
+    if (!isoDate) return rawDate;
+    const d = new Date(isoDate + "T00:00:00");
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diffDays = Math.round((today - d) / 86400000);
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    return d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+  }
+
+  function render(entries) {
+    if (!entries.length) {
+      el("timelineHost").innerHTML = `<div class="empty-state">No updates logged yet.</div>`;
+      return;
+    }
+
+    const groups = [];
+    let currentDate = null;
+    for (const e of entries) {
+      if (e.isoDate !== currentDate) {
+        groups.push({ isoDate: e.isoDate, rawDate: e.date, items: [] });
+        currentDate = e.isoDate;
+      }
+      groups[groups.length - 1].items.push(e);
+    }
+
+    el("timelineHost").innerHTML = groups.map(g => `
+      <div class="day-group">
+        <div class="day-heading">${escapeHtml(fmtDayHeading(g.isoDate, g.rawDate))}</div>
+        <div class="timeline">
+          ${g.items.map(e => {
+            const info = classify(e.change);
+            const hasSubject = e.company && e.company.trim();
+            return `
+              <div class="entry">
+                <div class="entry-dot dot-${info.cls}"></div>
+                <div class="entry-card">
+                  <div class="entry-badge badge-${info.cls}">${escapeHtml(info.badge)}</div>
+                  ${hasSubject ? `<div class="entry-company">${escapeHtml(e.company)}</div>` : ""}
+                  ${e.role ? `<div class="entry-role">${escapeHtml(e.role)}</div>` : ""}
+                  <div class="entry-change">${escapeHtml(e.change)}</div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function showLogin(wrong) {
+    el("loginOverlay").style.display = "flex";
+    el("mainWrap").style.display = "none";
+    el("loginError").style.display = wrong ? "block" : "none";
+    el("loginPassword").focus();
+  }
+  function hideLogin() {
+    el("loginOverlay").style.display = "none";
+    el("mainWrap").style.display = "block";
+  }
+
+  async function loadUpdates() {
+    el("timelineHost").innerHTML = `<div class="loading-state">Loading updates…</div>`;
+    el("fetchedAt").textContent = "Loading…";
+    try {
+      const resp = await fetch("/api/updates", { headers: { "x-dashboard-key": localStorage.getItem("dashboardKey") || "" } });
+      if (resp.status === 401) { localStorage.removeItem("dashboardKey"); showLogin(true); return; }
+      if (!resp.ok) throw new Error(`Request failed (${resp.status})`);
+      const data = await resp.json();
+      el("fetchedAt").textContent = "Updated " + new Date().toLocaleTimeString();
+      render(data.entries || []);
+    } catch (err) {
+      el("timelineHost").innerHTML = `<div class="error-state">Couldn't load updates: ${escapeHtml(err.message)}</div>`;
+      el("fetchedAt").textContent = "Failed to load";
+    }
+  }
+
+  el("loginForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    localStorage.setItem("dashboardKey", el("loginPassword").value);
+    hideLogin();
+    loadUpdates();
+  });
+  el("refreshBtn").addEventListener("click", loadUpdates);
+
+  if (localStorage.getItem("dashboardKey")) { hideLogin(); loadUpdates(); }
+  else showLogin(false);
+})();
+</script>
+</body>
+</html>

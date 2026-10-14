@@ -1,0 +1,37 @@
+{
+  "_comment": "FICTIONAL example candidate. Copy to profile.json (git-ignored) and replace with your own details.",
+  "name": "Jordan Example",
+  "degree": "BSc Economics (2:1), University of Exampleton, graduated 2025",
+  "degree_subject": "economics",
+  "location": "Manchester, UK",
+  "preferred_location_note": "Remote, hybrid or Manchester. Open to relocating within the UK.",
+  "preferred_locations": ["manchester"],
+  "target_salary": 26000,
+  "min_acceptable_salary": 21000,
+  "has_manual_driving_licence": false,
+  "languages_spoken": ["english"],
+  "years_full_time_experience": 0,
+  "experience_note": "only internships, part-time work and a student side business",
+  "background_sectors": [
+    "ecommerce/marketplace/retail",
+    "commercial/business development/sales",
+    "finance/consulting-adjacent",
+    "a genuine graduate scheme"
+  ],
+  "experience": [
+    "Co-founder, Northfield Online Store (2023-Present): small online homeware shop run alongside university; product listings, supplier sourcing, pricing and a simple P&L in Google Sheets.",
+    "Commercial Intern, Example Retail Group (Summer 2024): weekly sales reporting, competitor price checks and promotion analysis in Excel.",
+    "Student Ambassador, University of Exampleton (2022-2024): open-day events and campus tours."
+  ],
+  "skills": [
+    "Excel", "Google Sheets", "Airtable", "data analysis", "P&L tracking",
+    "pricing analysis", "financial modelling", "marketplace listings",
+    "inventory management", "supplier negotiation", "stakeholder communication"
+  ],
+  "best_fit_roles": [
+    "Marketplace Executive", "eCommerce Analyst", "Commercial Analyst",
+    "SDR/BDR", "Business Development Executive", "Operations Analyst",
+    "Pricing Analyst", "Revenue Operations Analyst", "Graduate Audit/Accounting Scheme",
+    "Regulatory/Compliance Analyst", "Risk Analyst"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "job-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Password-protected Netlify dashboard over the job scraper's Airtable base and a Google Sheet application tracker.",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.8.1",
+    "netlify-cli": "^17.36.0"
+  },
+  "license": "MIT"
+}

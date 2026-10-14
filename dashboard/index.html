@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Dashboard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:      #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.10);
+    --series-blue:    #2a78d6;
+    --series-orange:  #eb6834;
+    --series-aqua:    #1baf7a;
+    --series-yellow:  #eda100;
+    --series-magenta: #e87ba4;
+    --series-green:   #008300;
+    --series-violet:  #4a3aa7;
+    --series-red:     #e34948;
+    --status-good:    #0ca30c;
+    --status-warning: #fab219;
+    --status-critical:#d03b3b;
+    --row-hover:      rgba(11,11,11,0.035);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:      #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --border:         rgba(255,255,255,0.10);
+      --series-blue:    #3987e5;
+      --series-orange:  #d95926;
+      --series-aqua:    #199e70;
+      --series-yellow:  #c98500;
+      --series-magenta: #d55181;
+      --series-green:   #008300;
+      --series-violet:  #9085e9;
+      --series-red:     #e66767;
+      --status-good:    #0ca30c;
+      --status-warning: #fab219;
+      --status-critical:#d03b3b;
+      --row-hover:      rgba(255,255,255,0.04);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:      #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --border:         rgba(255,255,255,0.10);
+    --row-hover:      rgba(255,255,255,0.04);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 20px 64px;
+  }
+  header.page-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  header.page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .meta button {
+    margin-left: 10px;
+    font-size: 13px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .meta button:hover { background: var(--row-hover); }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .stat-tile .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .stat-tile .value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .stat-tile .sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .filters input[type="search"],
+  .filters select {
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--page-plane);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+  }
+  .filters input[type="search"] { flex: 1 1 220px; min-width: 160px; }
+  .filters .count {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  table.jobs {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 13px;
+  }
+  table.jobs th, table.jobs td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--gridline);
+    vertical-align: top;
+  }
+  table.jobs th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  table.jobs th:hover { color: var(--text-secondary); }
+  table.jobs th .arrow { font-size: 10px; opacity: .6; margin-left: 3px; }
+  table.jobs tbody tr:hover { background: var(--row-hover); }
+  table.jobs tbody tr:last-child td { border-bottom: none; }
+  .col-role { font-weight: 600; }
+  .company { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .rating-badge { font-variant-numeric: tabular-nums; }
+  .rating-good     { background: color-mix(in srgb, var(--status-good) 16%, transparent); color: var(--status-good); }
+  .rating-mid      { background: color-mix(in srgb, var(--series-blue) 16%, transparent); color: var(--series-blue); }
+  .rating-excluded { background: color-mix(in srgb, var(--status-critical) 14%, transparent); color: var(--status-critical); }
+
+  .source-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex: none;
+  }
+  .source-cell { display: flex; align-items: center; font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+
+  .apply-link {
+    color: var(--series-blue);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .apply-link:hover { text-decoration: underline; }
+
+  .status-text { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+
+  .empty-state, .error-state, .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .error-state { color: var(--status-critical); }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .pagination button {
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .pagination button:disabled { opacity: .4; cursor: default; }
+  .pagination button:not(:disabled):hover { background: var(--row-hover); }
+
+  .flag-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .flag-btn:hover { background: var(--row-hover); color: var(--text-secondary); }
+  .flag-btn.is-flagged {
+    color: var(--status-warning);
+    border-color: color-mix(in srgb, var(--status-warning) 40%, transparent);
+    background: color-mix(in srgb, var(--status-warning) 12%, transparent);
+  }
+
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+  }
+  .modal-box {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 22px 18px;
+    width: 340px;
+    max-width: calc(100vw - 32px);
+  }
+  .modal-box h3 { margin: 0 0 4px; font-size: 15px; }
+  .modal-box .modal-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+  .modal-box label { display: block; font-size: 12px; color: var(--text-secondary); margin: 10px 0 4px; }
+  .modal-box select, .modal-box textarea {
+    width: 100%; font-family: inherit; font-size: 13px; color: var(--text-primary);
+    background: var(--page-plane); border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 9px; box-sizing: border-box;
+  }
+  .modal-box textarea { min-height: 70px; resize: vertical; }
+  .modal-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 16px; }
+  .modal-actions .left { display: flex; gap: 8px; }
+  .modal-actions button {
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid var(--border);
+  }
+  .modal-actions .btn-cancel { background: none; color: var(--text-secondary); }
+  .modal-actions .btn-clear { background: none; color: var(--status-critical); border-color: color-mix(in srgb, var(--status-critical) 40%, transparent); }
+  .modal-actions .btn-save { background: var(--series-blue); color: #fff; border: none; }
+
+  @media (max-width: 720px) {
+    table.jobs thead { display: none; }
+    table.jobs, table.jobs tbody, table.jobs tr, table.jobs td { display: block; width: 100%; }
+    table.jobs tr { border-bottom: 1px solid var(--gridline); padding: 10px 12px; }
+    table.jobs td { border-bottom: none; padding: 3px 0; }
+    table.jobs td::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1px;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="loginOverlay" style="position:fixed;inset:0;background:var(--page-plane);display:flex;align-items:center;justify-content:center;z-index:100;">
+  <form id="loginForm" style="background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:28px 26px;width:280px;text-align:center;">
+    <div style="font-weight:700;font-size:16px;margin-bottom:14px;">Job Dashboard</div>
+    <input type="password" id="loginPassword" placeholder="Password" autofocus
+      style="width:100%;font-size:14px;padding:9px 10px;border-radius:6px;border:1px solid var(--border);background:var(--page-plane);color:var(--text-primary);margin-bottom:10px;box-sizing:border-box;">
+    <button type="submit" style="width:100%;font-size:14px;font-weight:600;padding:9px 10px;border-radius:6px;border:none;background:var(--series-blue);color:#fff;cursor:pointer;">Enter</button>
+    <div id="loginError" style="color:var(--status-critical);font-size:12px;margin-top:8px;display:none;">Wrong password</div>
+  </form>
+</div>
+<div class="wrap" style="display:none;" id="mainWrap">
+  <header class="page-header">
+    <div>
+      <h1 style="display:inline;">Job Dashboard</h1>
+      <a href="/tracker.html" style="font-size:13px;color:var(--series-blue);text-decoration:none;margin-left:14px;">Application Tracker →</a>
+      <a href="/updates.html" style="font-size:13px;color:var(--series-blue);text-decoration:none;margin-left:14px;">Updates →</a>
+    </div>
+    <div class="meta">
+      <span id="fetchedAt">Loading…</span>
+      <button id="refreshBtn" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="filters">
+    <input type="search" id="searchInput" placeholder="Search company or role…">
+    <select id="statusFilter"><option value="">All statuses</option></select>
+    <select id="sourceFilter"><option value="">All sources</option></select>
+    <select id="ratingFilter">
+      <option value="0">Any rating</option>
+      <option value="9">9+ only</option>
+      <option value="7">7+ (default threshold)</option>
+      <option value="1">Include excluded (1s)</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text-secondary);white-space:nowrap;cursor:pointer;">
+      <input type="checkbox" id="flaggedOnlyFilter"> Flagged only
+    </label>
+    <select id="sortSelect">
+      <option value="dateFound:desc">Newest first</option>
+      <option value="dateFound:asc">Oldest first</option>
+      <option value="rating:desc">Highest rating</option>
+      <option value="rating:asc">Lowest rating</option>
+      <option value="company:asc">Company A–Z</option>
+      <option value="company:desc">Company Z–A</option>
+      <option value="salary:desc">Salary high–low</option>
+      <option value="status:asc">Status</option>
+    </select>
+    <span class="count" id="resultCount"></span>
+  </div>
+
+  <div id="tableHost">
+    <div class="loading-state">Loading jobs…</div>
+  </div>
+
+  <div class="pagination" id="pagination" style="display:none;">
+    <button id="prevPage" type="button">Prev</button>
+    <span id="pageLabel"></span>
+    <button id="nextPage" type="button">Next</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="flagModal" style="display:none;">
+  <div class="modal-box">
+    <h3 id="flagModalTitle">Flag this job</h3>
+    <div class="modal-sub">Sends a reason straight to the rater — Claude reviews flagged jobs to fix scoring gaps.</div>
+    <label for="flagCategory">Reason</label>
+    <select id="flagCategory">
+      <option value="Underqualified">I'm underqualified for this</option>
+      <option value="Rating too high">Rating is too high</option>
+      <option value="Rating too low">Rating is too low</option>
+      <option value="Wrong sector/role">Wrong sector / role entirely</option>
+      <option value="Other">Other</option>
+    </select>
+    <label for="flagNote">Details (optional but helpful)</label>
+    <textarea id="flagNote" placeholder="e.g. requires 3+ years audit experience, essential requirements section"></textarea>
+    <div class="modal-actions">
+      <div class="left">
+        <button type="button" class="btn-cancel" id="flagCancelBtn">Cancel</button>
+        <button type="button" class="btn-clear" id="flagClearBtn" style="display:none;">Remove flag</button>
+      </div>
+      <button type="button" class="btn-save" id="flagSaveBtn">Save flag</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SOURCE_COLORS = {}; // filled dynamically from --series-* custom props
+  const SOURCE_ORDER = ["blue","orange","aqua","yellow","magenta","green","violet","red"];
+  let allJobs = [];
+  let filtered = [];
+  let sortKey = "dateFound";
+  let sortDir = "desc";
+  const appliedSet = new Set(JSON.parse(localStorage.getItem("appliedIds") || "[]"));
+  let page = 1;
+  const PAGE_SIZE = 50;
+
+  const el = (id) => document.getElementById(id);
+
+  function ratingClass(r) {
+    if (r === null || r === undefined) return "rating-mid";
+    if (r <= 6) return "rating-excluded";
+    if (r >= 9) return "rating-good";
+    return "rating-mid";
+  }
+
+  function sourceColorVar(source) {
+    if (!SOURCE_COLORS[source]) {
+      const idx = Object.keys(SOURCE_COLORS).length % SOURCE_ORDER.length;
+      SOURCE_COLORS[source] = `var(--series-${SOURCE_ORDER[idx]})`;
+    }
+    return SOURCE_COLORS[source];
+  }
+
+  function fmtDate(d) {
+    if (!d) return "";
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+  }
+
+  function populateFilterOptions(jobs) {
+    const statuses = [...new Set(jobs.map(j => j.status).filter(Boolean))].sort();
+    const sources = [...new Set(jobs.map(j => j.source).filter(Boolean))].sort();
+    const statusSel = el("statusFilter");
+    const sourceSel = el("sourceFilter");
+    for (const s of statuses) {
+      const opt = document.createElement("option");
+      opt.value = s; opt.textContent = s;
+      statusSel.appendChild(opt);
+    }
+    for (const s of sources) {
+      const opt = document.createElement("option");
+      opt.value = s; opt.textContent = s;
+      sourceSel.appendChild(opt);
+    }
+  }
+
+  function computeStats(jobs) {
+    const notApplied = jobs.filter(j => j.status === "Not applied");
+    const highPriority = notApplied.filter(j => j.rating !== null && j.rating >= 9);
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const newThisWeek = jobs.filter(j => j.dateFound && new Date(j.dateFound) >= weekAgo);
+    const ratedNotApplied = notApplied.filter(j => j.rating !== null && j.rating >= 7);
+    const avgRating = ratedNotApplied.length
+      ? (ratedNotApplied.reduce((s, j) => s + j.rating, 0) / ratedNotApplied.length).toFixed(1)
+      : "—";
+
+    el("stats").innerHTML = `
+      <div class="stat-tile">
+        <div class="label">Not applied</div>
+        <div class="value">${notApplied.length}</div>
+        <div class="sub">out of ${jobs.length} total</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">High priority (9+)</div>
+        <div class="value">${highPriority.length}</div>
+        <div class="sub">worth applying first</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">New this week</div>
+        <div class="value">${newThisWeek.length}</div>
+        <div class="sub">found in last 7 days</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">Avg rating</div>
+        <div class="value">${avgRating}</div>
+        <div class="sub">not-applied, 7+</div>
+      </div>
+    `;
+  }
+
+  function applyFilters() {
+    const q = el("searchInput").value.trim().toLowerCase();
+    const status = el("statusFilter").value;
+    const source = el("sourceFilter").value;
+    const minRating = parseInt(el("ratingFilter").value, 10) || 0;
+    const flaggedOnly = el("flaggedOnlyFilter").checked;
+
+    filtered = allJobs.filter(j => {
+      if (q && !(`${j.company} ${j.role}`.toLowerCase().includes(q))) return false;
+      if (status && j.status !== status) return false;
+      if (source && j.source !== source) return false;
+      if (flaggedOnly && !j.flagCategory) return false;
+      if (flaggedOnly) return true; // flagged view ignores the rating filter — show every flag regardless of score
+      if (minRating > 1 && (j.rating === null || j.rating < minRating)) return false;
+      if (minRating === 0 && j.rating !== null && j.rating <= 6) return false; // default: hide excluded
+      return true;
+    });
+
+    sortJobs();
+    page = 1;
+    render();
+  }
+
+  function sortJobs() {
+    filtered.sort((a, b) => {
+      let av = a[sortKey], bv = b[sortKey];
+      if (sortKey === "rating") { av = av ?? -1; bv = bv ?? -1; }
+      if (sortKey === "dateFound" || sortKey === "datePosted") { av = av || ""; bv = bv || ""; }
+      if (typeof av === "string") av = av.toLowerCase();
+      if (typeof bv === "string") bv = bv.toLowerCase();
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
+
+  function render() {
+    el("resultCount").textContent = `${filtered.length} job${filtered.length === 1 ? "" : "s"}`;
+
+    if (!filtered.length) {
+      el("tableHost").innerHTML = `<div class="empty-state">No jobs match these filters.</div>`;
+      el("pagination").style.display = "none";
+      return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    page = Math.min(page, totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+    const arrow = (key) => sortKey === key ? `<span class="arrow">${sortDir === "asc" ? "▲" : "▼"}</span>` : "";
+
+    const rows = pageItems.map(j => `
+      <tr>
+        <td data-label="Role">
+          <div class="col-role">${escapeHtml(j.role)}</div>
+          <div class="company">${escapeHtml(j.company)}</div>
+        </td>
+        <td data-label="Rating"><span class="badge rating-badge ${ratingClass(j.rating)}">${j.rating ?? "–"}</span></td>
+        <td data-label="Source"><span class="source-cell"><span class="source-dot" style="background:${sourceColorVar(j.source)}"></span>${escapeHtml(j.source)}</span></td>
+        <td data-label="Status"><span class="status-text">${escapeHtml(j.status)}</span></td>
+        <td data-label="Location" class="status-text">${escapeHtml(j.location)}</td>
+        <td data-label="Salary" class="status-text">${escapeHtml(j.salary)}</td>
+        <td data-label="Found" class="status-text">${fmtDate(j.dateFound)}</td>
+        <td data-label="Link">${j.url ? `<a class="apply-link" href="${escapeHtml(j.url)}" target="_blank" rel="noopener">Open ↗</a>` : ""}</td>
+        <td data-label="Applied">${appliedSet.has(j.id)
+          ? `<button type="button" class="flag-btn is-flagged" data-undo-id="${escapeHtml(j.id)}" title="Click to undo — removes it from the tracker sheet">✓ Added (Undo)</button>`
+          : `<button type="button" class="flag-btn applied-btn" data-applied-id="${escapeHtml(j.id)}">I Applied</button>`
+        }</td>
+        <td data-label="Flag"><button type="button" class="flag-btn ${j.flagCategory ? "is-flagged" : ""}" data-flag-id="${escapeHtml(j.id)}" title="${j.flagCategory ? escapeHtml(j.flagCategory) + (j.flagNote ? ': ' + escapeHtml(j.flagNote) : '') : ''}">${j.flagCategory ? "🚩 Flagged" : "🚩 Flag"}</button></td>
+        <td data-label="Not Applying"><button type="button" class="flag-btn" data-dismiss-id="${escapeHtml(j.id)}" title="Marks it Rejected in Airtable and hides it here — stays in the data, doesn't get deleted">Not Applying</button></td>
+      </tr>
+    `).join("");
+
+    el("tableHost").innerHTML = `
+      <table class="jobs">
+        <thead>
+          <tr>
+            <th data-key="company">Company / Role${arrow("company")}</th>
+            <th data-key="rating">Rating${arrow("rating")}</th>
+            <th data-key="source">Source${arrow("source")}</th>
+            <th data-key="status">Status${arrow("status")}</th>
+            <th data-key="location">Location${arrow("location")}</th>
+            <th data-key="salary">Salary${arrow("salary")}</th>
+            <th data-key="dateFound">Found${arrow("dateFound")}</th>
+            <th>Link</th>
+            <th>Applied</th>
+            <th>Flag</th>
+            <th>Not Applying</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+
+    document.querySelectorAll("[data-flag-id]").forEach(btn => {
+      btn.addEventListener("click", () => openFlagModal(btn.getAttribute("data-flag-id")));
+    });
+    document.querySelectorAll("[data-applied-id]").forEach(btn => {
+      btn.addEventListener("click", () => markApplied(btn.getAttribute("data-applied-id"), btn));
+    });
+    document.querySelectorAll("[data-undo-id]").forEach(btn => {
+      btn.addEventListener("click", () => undoApplied(btn.getAttribute("data-undo-id"), btn));
+    });
+    document.querySelectorAll("[data-dismiss-id]").forEach(btn => {
+      btn.addEventListener("click", () => dismissJob(btn.getAttribute("data-dismiss-id"), btn));
+    });
+
+    document.querySelectorAll("table.jobs th[data-key]").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.getAttribute("data-key");
+        if (sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
+        else { sortKey = key; sortDir = key === "rating" || key === "dateFound" ? "desc" : "asc"; }
+        const matchOpt = el("sortSelect").querySelector(`option[value="${sortKey}:${sortDir}"]`);
+        if (matchOpt) el("sortSelect").value = matchOpt.value;
+        sortJobs();
+        render();
+      });
+    });
+
+    el("pagination").style.display = totalPages > 1 ? "flex" : "none";
+    el("pageLabel").textContent = `Page ${page} of ${totalPages}`;
+    el("prevPage").disabled = page <= 1;
+    el("nextPage").disabled = page >= totalPages;
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  let flagTargetId = null;
+
+  function openFlagModal(recordId) {
+    flagTargetId = recordId;
+    const job = allJobs.find(j => j.id === recordId);
+    el("flagModalTitle").textContent = job ? `Flag: ${job.company} — ${job.role}` : "Flag this job";
+    el("flagCategory").value = (job && job.flagCategory) || "Underqualified";
+    el("flagNote").value = (job && job.flagNote) || "";
+    el("flagClearBtn").style.display = (job && job.flagCategory) ? "inline-block" : "none";
+    el("flagModal").style.display = "flex";
+  }
+
+  function closeFlagModal() {
+    el("flagModal").style.display = "none";
+    flagTargetId = null;
+  }
+
+  async function submitFlag(clear) {
+    if (!flagTargetId) return;
+    const btn = clear ? el("flagClearBtn") : el("flagSaveBtn");
+    const originalText = btn.textContent;
+    btn.textContent = "Saving…";
+    btn.disabled = true;
+    try {
+      const resp = await fetch("/api/flag", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-dashboard-key": localStorage.getItem("dashboardKey") || "",
+        },
+        body: JSON.stringify({
+          recordId: flagTargetId,
+          category: clear ? "__clear__" : el("flagCategory").value,
+          note: clear ? "" : el("flagNote").value.trim(),
+        }),
+      });
+      if (resp.status === 401) { localStorage.removeItem("dashboardKey"); closeFlagModal(); showLogin(true); return; }
+      if (!resp.ok) throw new Error(`Save failed (${resp.status})`);
+
+      const job = allJobs.find(j => j.id === flagTargetId);
+      if (job) {
+        job.flagCategory = clear ? "" : el("flagCategory").value;
+        job.flagNote = clear ? "" : el("flagNote").value.trim();
+      }
+      closeFlagModal();
+      render();
+    } catch (err) {
+      alert("Couldn't save flag: " + err.message);
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  el("flagCancelBtn").addEventListener("click", closeFlagModal);
+  el("flagSaveBtn").addEventListener("click", () => submitFlag(false));
+  el("flagClearBtn").addEventListener("click", () => submitFlag(true));
+  el("flagModal").addEventListener("click", (e) => { if (e.target.id === "flagModal") closeFlagModal(); });
+
+  // All /api/tracker writes (append/remove) share one queue, chained so only
+  // one is ever in flight at a time. Found 06 Aug 2026: two "I Applied" clicks
+  // fired close together raced each other's Sheets API append call and
+  // corrupted a row (columns interleaved between the two jobs). Sheets has no
+  // real row-level locking, so serializing on the client is the fix.
+  let trackerWriteChain = Promise.resolve();
+  function queueTrackerWrite(fn) {
+    const result = trackerWriteChain.then(fn, fn);
+    trackerWriteChain = result.catch(() => {}); // don't let one failure jam the queue
+    return result;
+  }
+
+  async function markApplied(jobId, btn) {
+    const job = allJobs.find(j => j.id === jobId);
+    if (!job) return;
+    btn.textContent = "Queued…";
+    btn.disabled = true;
+    await queueTrackerWrite(async () => {
+      btn.textContent = "Adding…";
+      try {
+        const resp = await fetch("/api/tracker", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-dashboard-key": localStorage.getItem("dashboardKey") || "" },
+          body: JSON.stringify({
+            isNewJob: true,
+            company: job.company,
+            role: job.role,
+            status: "Applied, waiting for response",
+            link: job.url,
+          }),
+        });
+        if (resp.status === 401) { localStorage.removeItem("dashboardKey"); showLogin(true); return; }
+        if (!resp.ok) throw new Error(`Save failed (${resp.status})`);
+
+        // Also sync the Airtable Status field, not just the Google Sheet
+        // tracker — otherwise this job keeps showing under the "Not applied"
+        // filter here even though you've applied. Found 06 Aug 2026. Status is
+        // a fixed single-select in Airtable — "Applied" isn't a valid choice,
+        // "Waiting for response" is the existing option for this.
+        const statusResp = await fetch("/api/dismiss", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-dashboard-key": localStorage.getItem("dashboardKey") || "" },
+          body: JSON.stringify({ recordId: jobId, status: "Waiting for response" }),
+        });
+        if (statusResp.ok) {
+          job.status = "Waiting for response";
+        } // if this leg fails, the tracker write already succeeded — don't block on it, just leave the Airtable status as-is
+
+        appliedSet.add(jobId);
+        localStorage.setItem("appliedIds", JSON.stringify([...appliedSet]));
+        btn.textContent = "✓ Added";
+        btn.classList.add("is-flagged");
+        applyFilters();
+      } catch (err) {
+        alert("Couldn't add to tracker: " + err.message);
+        btn.textContent = "I Applied";
+        btn.disabled = false;
+      }
+    });
+  }
+
+  async function undoApplied(jobId, btn) {
+    const job = allJobs.find(j => j.id === jobId);
+    if (!job) return;
+    const originalText = btn.textContent;
+    btn.textContent = "Queued…";
+    btn.disabled = true;
+    await queueTrackerWrite(async () => {
+    btn.textContent = "Removing…";
+    try {
+      const resp = await fetch("/api/tracker", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-dashboard-key": localStorage.getItem("dashboardKey") || "" },
+        body: JSON.stringify({ remove: true, company: job.company, role: job.role }),
+      });
+      if (resp.status === 401) { localStorage.removeItem("dashboardKey"); showLogin(true); return; }
+      if (!resp.ok) throw new Error(`Remove failed (${resp.status})`);
+
+      const statusResp = await fetch("/api/dismiss", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-dashboard-key": localStorage.getItem("dashboardKey") || "" },
+        body: JSON.stringify({ recordId: jobId, status: "Not applied" }),
+      });
+      if (statusResp.ok) job.status = "Not applied";
+
+      appliedSet.delete(jobId);
+      localStorage.setItem("appliedIds", JSON.stringify([...appliedSet]));
+      applyFilters();
+    } catch (err) {
+      alert("Couldn't remove from tracker: " + err.message);
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+    });
+  }
+
+  async function dismissJob(jobId, btn) {
+    const job = allJobs.find(j => j.id === jobId);
+    if (!job) return;
+    const originalText = btn.textContent;
+    btn.textContent = "Removing…";
+    btn.disabled = true;
+    try {
+      const resp = await fetch("/api/dismiss", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-dashboard-key": localStorage.getItem("dashboardKey") || "" },
+        body: JSON.stringify({ recordId: jobId }),
+      });
+      if (resp.status === 401) { localStorage.removeItem("dashboardKey"); showLogin(true); return; }
+      if (!resp.ok) throw new Error(`Dismiss failed (${resp.status})`);
+      // Soft-dismiss only in Airtable (Status -> "Rejected by me") — the record
+      // itself isn't deleted there, since flagged-but-dismissed jobs still need
+      // reviewing. Removing it from the in-memory list just hides it from this
+      // view immediately rather than waiting on a full reload.
+      allJobs = allJobs.filter(j => j.id !== jobId);
+      computeStats(allJobs);
+      applyFilters();
+    } catch (err) {
+      alert("Couldn't dismiss: " + err.message);
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  async function loadJobs() {
+    el("tableHost").innerHTML = `<div class="loading-state">Loading jobs…</div>`;
+    el("fetchedAt").textContent = "Loading…";
+    try {
+      const resp = await fetch("/api/jobs", { headers: { "x-dashboard-key": localStorage.getItem("dashboardKey") || "" } });
+      if (resp.status === 401) {
+        localStorage.removeItem("dashboardKey");
+        showLogin(true);
+        return;
+      }
+      if (!resp.ok) throw new Error(`Request failed (${resp.status})`);
+      const data = await resp.json();
+      allJobs = data.jobs || [];
+      populateFilterOptions(allJobs);
+      computeStats(allJobs);
+      el("fetchedAt").textContent = "Updated " + new Date(data.fetchedAt).toLocaleTimeString();
+      applyFilters();
+    } catch (err) {
+      el("tableHost").innerHTML = `<div class="error-state">Couldn't load jobs: ${escapeHtml(err.message)}</div>`;
+      el("fetchedAt").textContent = "Failed to load";
+    }
+  }
+
+  function showLogin(wrongPassword) {
+    el("loginOverlay").style.display = "flex";
+    el("mainWrap").style.display = "none";
+    el("loginError").style.display = wrongPassword ? "block" : "none";
+    el("loginPassword").focus();
+  }
+
+  function hideLogin() {
+    el("loginOverlay").style.display = "none";
+    el("mainWrap").style.display = "block";
+  }
+
+  el("loginForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const pw = el("loginPassword").value;
+    localStorage.setItem("dashboardKey", pw);
+    hideLogin();
+    loadJobs();
+  });
+
+  el("searchInput").addEventListener("input", applyFilters);
+  el("statusFilter").addEventListener("change", applyFilters);
+  el("sourceFilter").addEventListener("change", applyFilters);
+  el("ratingFilter").addEventListener("change", applyFilters);
+  el("flaggedOnlyFilter").addEventListener("change", applyFilters);
+  el("sortSelect").addEventListener("change", () => {
+    const [key, dir] = el("sortSelect").value.split(":");
+    sortKey = key; sortDir = dir;
+    sortJobs();
+    render();
+  });
+  el("refreshBtn").addEventListener("click", loadJobs);
+  el("prevPage").addEventListener("click", () => { page--; render(); });
+  el("nextPage").addEventListener("click", () => { page++; render(); });
+
+  if (localStorage.getItem("dashboardKey")) {
+    hideLogin();
+    loadJobs();
+  } else {
+    showLogin(false);
+  }
+})();
+</script>
+</body>
+</html>
