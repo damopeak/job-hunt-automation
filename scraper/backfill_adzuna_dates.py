@@ -7,7 +7,7 @@ that only affects future scrapes, not rows already in Airtable).
 Adzuna's own job pages embed the true date as schema.org JSON-LD
 ("datePosted"), already at midnight UTC — exactly the format Airtable's
 Date Posted field accepts. For each affected record: fetch its stored URL,
-extract datePosted, and PATCH it in. If the page is gone/unreachable or has
+extract datePosted and PATCH it in. If the page is gone/unreachable or has
 no datePosted (listing expired, URL dead), DELETE the record instead — per
 user instruction: a job with no verifiable posted date shouldn't be sitting
 in the tracker at all.

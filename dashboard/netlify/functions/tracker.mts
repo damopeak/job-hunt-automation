@@ -73,7 +73,7 @@ function json(body: unknown, status = 200): Response {
 // between two different appends (found 06 Aug 2026 — "Verisk Analytics"'s
 // company/role ended up smeared into another row's Notes column). Avoid the
 // heuristic entirely: read the range ourselves, compute the exact next row
-// number (including any gaps, so we never land inside one), and write there
+// number (including any gaps, so we never land inside one) and write there
 // with a plain values.update instead of :append.
 async function appendRowExplicit(authHeader: Record<string, string>, row: string[], existingValues?: string[][]): Promise<Response | null> {
   let values = existingValues;

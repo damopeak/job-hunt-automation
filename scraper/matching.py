@@ -5,7 +5,7 @@ def compile_term(term: str) -> re.Pattern:
     """Word-boundary-safe matcher for a keyword/phrase. Plain substring
     checks let short terms false-match inside unrelated words — e.g. "intern"
     (meant to catch "internship") matches inside "international"/"internal"/
-    "internet", and "grad" (meant to catch "graduate") matches inside
+    "internet" and "grad" (meant to catch "graduate") matches inside
     "upgrade"/"degrade"/"gradient". Wrapping in \\b anchors avoids that while
     still matching multi-word phrases (e.g. "account manager") correctly.
     Boundaries are only added on sides where the term itself starts/ends with

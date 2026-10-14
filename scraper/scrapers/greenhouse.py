@@ -9,7 +9,7 @@ API is completely open — no Cloudflare, no auth, plain JSON — and
 request, so there's no per-job detail-page fetch needed at all.
 
 GREENHOUSE_BOARDS lists which companies' boards to check. Add a company by
-finding its board token: visit the company's Careers page, find a job, and
+finding its board token: visit the company's Careers page, find a job and
 its URL either contains `?gh_jid=...` (board token is often the URL's
 subdomain, e.g. jobs.<token>.com) or links out to
 `boards.greenhouse.io/<token>` / `job-boards.greenhouse.io/<token>` — that

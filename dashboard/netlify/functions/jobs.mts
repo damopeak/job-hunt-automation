@@ -80,7 +80,7 @@ export default async (req: Request, context: Context) => {
     JSON.stringify({ jobs, count: jobs.length, fetchedAt: new Date().toISOString() }),
     {
       status: 200,
-      // MUST be private/no-store — this endpoint is behind a password check,
+      // MUST be private/no-store — this endpoint is behind a password check
       // and "public" caching let Netlify's edge CDN serve a cached response
       // to ANY request to this URL regardless of the x-dashboard-key header,
       // bypassing auth entirely on a cache hit. Found 06 Aug 2026 during a

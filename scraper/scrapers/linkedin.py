@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # LinkedIn's unauthenticated "guest" search endpoint — no login required, but
 # unofficial and rate-limited. Kept to a small keyword list (see
-# config.LINKEDIN_KEYWORDS) with a delay between every request, and backs off
+# config.LINKEDIN_KEYWORDS) with a delay between every request and backs off
 # hard on 429s, to offset the risk of paging deep into results.
 SEARCH_URL = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 HEADERS = {

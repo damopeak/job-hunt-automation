@@ -109,7 +109,7 @@ TARGET_TITLES = [
 SENIORITY_TERMS = config.SENIORITY_TERMS
 
 # "Associate" is genuinely ambiguous: entry-level in retail/marketing, but a
-# senior title (3-6+ years) in consulting, banking, and corporate strategy
+# senior title (3-6+ years) in consulting, banking and corporate strategy
 # roles. Trust it as a seniority signal only when a real description is
 # available to cross-check against (the experience-years hard exclusion
 # below will catch a senior "Associate" role if so) — with no description
@@ -187,7 +187,7 @@ _NUMBER_WORD_PATTERN = "|".join(_NUMBER_WORDS.keys())
 #
 # "practical" added to the qualifier list 18 Aug 2026 — "Finance Analyst"
 # (Hyve Group, flagged as Underqualified) had "2–5 years' practical
-# experience in a Finance, Accounting or FP&A role", and "practical" wasn't
+# experience in a Finance, Accounting or FP&A role" and "practical" wasn't
 # among the relevant/professional/prior/working qualifiers already allowed
 # directly before "experience".
 EXPERIENCE_YEARS_REGEX = re.compile(
@@ -251,7 +251,7 @@ EXPERIENCE_REQUIRED_LABEL_REGEX = re.compile(
 # (HERA Communication Strategies, flagged 09 Aug 2026, rated 8) had "Around
 # 3+ years in PR or communications, ideally with corporate, financial,
 # property o B2B experience". Structurally distinct from every pattern above:
-# "years" is followed by "in" (not "of"/bare), and "experience" sits at the
+# "years" is followed by "in" (not "of"/bare) and "experience" sits at the
 # end of a long comma-separated list rather than immediately after the count.
 # Deliberately anchored on the literal "ideally with" join (not bare "with")
 # — a bare "with" was tried first and false-matched ordinary prose like
@@ -384,7 +384,7 @@ PRIOR_ROLE_EXPERIENCE_TRAILING_NEGATIONS = (
 # "Internship OR prior work experience... is essential" (William Blair
 # "Investment Banking Analyst, Services & Industrials" / "...Analyst 1,
 # Technology", found 09 Aug 2026 via two links the user found manually) is a
-# disjunction — internship experience alone satisfies it, and the candidate
+# disjunction — internship experience alone satisfies it and the candidate
 # profile explicitly has internships. The bare qualifier-based regex above
 # can't see that "prior" is one branch of an "X or prior experience" choice,
 # not an unconditional requirement. Skip a match if "internship" appears
@@ -556,7 +556,7 @@ def _requires_prior_role_experience(text: str) -> bool:
 
 
 # "Must currently be a student" listings — common in finance/consulting spring
-# weeks, insight days, and some internships. The candidate has already graduated, so
+# weeks, insight days and some internships. The candidate has already graduated, so
 # these are a hard mismatch regardless of how well the sector/title matches.
 # Added 27 Jul 2026 alongside the finance/IB/PE/AM/WM sector expansion.
 CURRENT_STUDENT_REQUIRED_TERMS = [
@@ -784,7 +784,7 @@ STEM_DEGREE_REGEX = re.compile(
     # Broadened 18 Aug 2026 (AI check disabled, compensating in rater.py) —
     # specific non-Economics-compatible degree subjects that showed up
     # repeatedly as an explicit requirement: law, construction/built-
-    # environment, computer science/cyber security, and the general
+    # environment, computer science/cyber security and the general
     # "quantitative or scientific discipline" phrasing. Deliberately doesn't
     # touch generic "Economics, Finance, Business or related field" listings
     # — only fires on these specific incompatible subjects.
@@ -1034,7 +1034,7 @@ def rate(job) -> dict:
     # re-enabling SDR/BDR search coverage): a sales role at a SaaS/AI company
     # will describe its own product using words like "software"/"cloud"/
     # "AI"/"machine learning" throughout the listing — that's the product
-    # being sold, not a skill the candidate needs, and shouldn't be treated
+    # being sold, not a skill the candidate needs and shouldn't be treated
     # the same as an actual engineering-role requirement.
     if SDR_BDR_ROLE_TITLE_REGEX.search(title):
         tech_penalty = 0.0
@@ -1060,7 +1060,7 @@ def rate(job) -> dict:
              - tech_penalty - lang_penalty - industry_penalty - manager_penalty)
 
     # Cap at 5 if no seniority — raised to 9 for strong matches (added 11 Aug
-    # 2026: deverellsmith "Analyst", ICE "Analyst, Market Regulation", and
+    # 2026: deverellsmith "Analyst", ICE "Analyst, Market Regulation" and
     # Haystack "Data Analyst" all hit this exact cap despite strong CV+role
     # alignment, just because the posting never literally says "junior"/
     # "graduate" — three real misses from the same root cause in one session
